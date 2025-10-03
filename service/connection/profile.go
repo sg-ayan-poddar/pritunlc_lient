@@ -37,6 +37,7 @@ type Profile struct {
 	TokenTtl           int                         `json:"token_ttl"`
 	Reconnect          bool                        `json:"reconnect"`
 	Timeout            bool                        `json:"timeout"`
+	DeviceId           string                      `json:"deviceId"`
 	SystemProfile      bool                        `json:"-"`
 }
 

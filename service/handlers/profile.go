@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"os/exec"
+	"regexp"
+	"runtime"
 	"runtime/debug"
+	"strings"
 
 	"github.com/dropbox/godropbox/errors"
 	"github.com/gin-gonic/gin"
@@ -42,6 +46,7 @@ type profileData struct {
 	TokenTtl           int                         `json:"token_ttl"`
 	Reconnect          bool                        `json:"reconnect"`
 	Timeout            bool                        `json:"timeout"`
+	DeviceId           string                      `json:"deviceId"`
 }
 
 func profilesGet(c *gin.Context) {
@@ -88,6 +93,23 @@ func profilePost(c *gin.Context) {
 		return
 	}
 
+	deviceid, err := getSystemSerial()
+	if err != nil {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "handler: Failed to get device id"),
+		}
+		utils.AbortWithError(c, 500, err)
+		return
+	}
+
+	if data.DeviceId != deviceid {
+		err = &errortypes.RequestError{
+			errors.New("handler: Invalid device id."),
+		}
+		utils.AbortWithError(c, 500, err)
+		return
+	}
+
 	sprfl := sprofile.Get(data.Id)
 	if sprfl != nil {
 		err = sprofile.Activate(data.Id, data.Mode, data.Password)
@@ -131,6 +153,7 @@ func profilePost(c *gin.Context) {
 		ServerBoxPublicKey: data.ServerBoxPublicKey,
 		TokenTtl:           data.TokenTtl,
 		Reconnect:          data.Reconnect,
+		DeviceId:           data.DeviceId,
 	}
 
 	conn, err = connection.NewConnection(prfl)
@@ -138,6 +161,8 @@ func profilePost(c *gin.Context) {
 		utils.AbortWithError(c, 500, err)
 		return
 	}
+
+	print(conn.Data.DeviceId)
 
 	go func() {
 		defer func() {
@@ -224,4 +249,44 @@ func profileDel2(c *gin.Context) {
 	}
 
 	c.JSON(200, nil)
+}
+
+func getSystemSerial() (string, error) {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "linux":
+		cmd = exec.Command("/bin/sh", "-c", "cat /sys/class/dmi/id/product_uuid || sudo dmidecode -s system-serial-number")
+	case "windows":
+		cmd = exec.Command("wmic", "bios", "get", "serialnumber")
+	case "darwin":
+		cmd = exec.Command("ioreg", "-d2", "-c", "IOPlatformExpertDevice", "-a")
+	default:
+		return "", errors.New("unsupported platform")
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
+	result := strings.TrimSpace(string(output))
+
+	if runtime.GOOS == "windows" {
+		for _, line := range strings.Split(result, "\n") {
+			line = strings.TrimSpace(line)
+			if line != "" && !strings.Contains(strings.ToLower(line), "serial") {
+				return line, nil
+			}
+		}
+	}
+
+	if runtime.GOOS == "darwin" {
+		re := regexp.MustCompile(`"IOPlatformSerialNumber"\s*=\s*"([^"]+)"`)
+		if matches := re.FindStringSubmatch(result); len(matches) > 1 {
+			return matches[1], nil
+		}
+	}
+
+	return result, nil
 }
