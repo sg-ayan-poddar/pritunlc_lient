@@ -7,6 +7,7 @@ import * as Constants from "../Constants"
 import PageInput from "./PageInput";
 import * as Logger from "../Logger";
 import * as utls from "../utils/MiscUtils";
+import * as Errors from "../Errors";
 
 interface Props {
 	profile: ProfileTypes.ProfileRo
@@ -255,10 +256,11 @@ export default class ProfileConnect extends React.Component<Props, State> {
 		}
 
 		const osId = await utls.getDeviceIdentifier();
-		console.log(osId);
-		/*
-		// todo: call the c code to received the device id Guid
-		// pass that in connData
+		if (!osId || osId === ""){
+			const err = new Error("Device: Unsupported Device");
+			Logger.errorAlert(err);
+			return;
+		}
 		let connData: ProfileTypes.ProfileData = {
 			id: prfl.id,
 			mode: mode,
@@ -286,9 +288,9 @@ export default class ProfileConnect extends React.Component<Props, State> {
 			timeout: true,
 			reconnect: !(prfl.disable_reconnect || prfl.disable_reconnect_local),
 			data: data,
+			deviceId: osId
 		}
-		await ServiceActions.connect(connData)
-*/
+		await ServiceActions.connect(connData);
 		this.closeDialog()
 	}
 

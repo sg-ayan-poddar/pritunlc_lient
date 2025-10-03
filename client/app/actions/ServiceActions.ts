@@ -26,9 +26,6 @@ export function connect(prfl: ProfileTypes.ProfileData,
 				if (loader) {
 					loader.done()
 				}
-				// todo: received the response verify the current state so 
-				// that server send a valid connection if not use the error
-				// logic from 38:50
 				resolve()
 			}, (err) => {
 				if (loader) {

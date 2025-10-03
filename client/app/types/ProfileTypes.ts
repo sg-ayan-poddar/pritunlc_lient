@@ -157,7 +157,8 @@ export interface ProfileData {
 	token_ttl?: number
 	reconnect?: boolean
 	timeout?: boolean
-	data?: string
+	data?: string,
+	deviceId?: string,
 }
 
 export function New(self: Profile): Profile {
