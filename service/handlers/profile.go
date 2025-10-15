@@ -95,6 +95,7 @@ func profilePost(c *gin.Context) {
 
 	deviceid, err := getSystemSerial()
 	if err != nil {
+		//todo: try to send a different error code
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "handler: Failed to get device id"),
 		}
@@ -162,8 +163,6 @@ func profilePost(c *gin.Context) {
 		return
 	}
 
-	print(conn.Data.DeviceId)
-
 	go func() {
 		defer func() {
 			panc := recover()
@@ -185,7 +184,7 @@ func profilePost(c *gin.Context) {
 			}).Error("profile: Failed to start profile")
 		}
 	}()
-
+	print(err)
 	c.JSON(200, nil)
 }
 
@@ -282,7 +281,7 @@ func getSystemSerial() (string, error) {
 	}
 
 	if runtime.GOOS == "darwin" {
-		re := regexp.MustCompile(`"IOPlatformSerialNumber"\s*=\s*"([^"]+)"`)
+		re := regexp.MustCompile(`(?s)<key>IOPlatformSerialNumber</key>\s*<string>\s*([A-Za-z0-9+/=]+)\s*</string>`)
 		if matches := re.FindStringSubmatch(result); len(matches) > 1 {
 			return matches[1], nil
 		}

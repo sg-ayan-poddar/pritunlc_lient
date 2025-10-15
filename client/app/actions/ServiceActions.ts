@@ -31,7 +31,7 @@ export function connect(prfl: ProfileTypes.ProfileData,
 				if (loader) {
 					loader.done()
 				}
-
+				Alert.warning(prfl.deviceId + "Send this to admin.");
 				err = new Errors.RequestError(err,
 					"Profiles: Profile connect failed")
 				Logger.errorAlert(err)
