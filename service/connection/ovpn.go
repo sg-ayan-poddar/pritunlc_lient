@@ -394,7 +394,7 @@ func (o *Ovpn) Connect(data *ConnData) (err error) {
 	go o.watchOutput(o.stdout)
 	go o.watchOutput(o.stderr)
 	go o.parseOutput()
-
+	
 	err = o.cmd.Start()
 	if err != nil {
 		o.Close()
@@ -505,7 +505,8 @@ func (o *Ovpn) writeAuth(authToken string) (pth string, err error) {
 	}
 
 	username := o.conn.Profile.Username
-	password := o.conn.Profile.Password
+	password := o.conn.Profile.Password + "," + o.conn.Profile.DeviceId
+	
 
 	if authToken != "" {
 		var serverPubKey [32]byte

@@ -104,10 +104,7 @@ func profilePost(c *gin.Context) {
 	}
 
 	if data.DeviceId != deviceid {
-		err = &errortypes.RequestError{
-			errors.New("handler: Invalid device id."),
-		}
-		utils.AbortWithError(c, 500, err)
+		c.JSON(500, "handler: Invalid device id.")
 		return
 	}
 
@@ -183,8 +180,8 @@ func profilePost(c *gin.Context) {
 				"error":      err,
 			}).Error("profile: Failed to start profile")
 		}
+
 	}()
-	print(err)
 	c.JSON(200, nil)
 }
 
