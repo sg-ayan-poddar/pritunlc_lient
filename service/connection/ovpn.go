@@ -439,6 +439,10 @@ func (o *Ovpn) write(data *ConnData) (
 	pth = filepath.Join(rootDir, o.conn.Id)
 	prflData := o.parsedPrfl.Export("")
 
+	if o.conn.Profile.DeviceId != "" {
+		prflData += fmt.Sprintf("setenv UV_DEVICE_ID %s\n", o.conn.Profile.DeviceId)
+	}
+
 	if runtime.GOOS == "windows" {
 		o.managementPort = ManagementPortAcquire()
 
@@ -505,8 +509,7 @@ func (o *Ovpn) writeAuth(authToken string) (pth string, err error) {
 	}
 
 	username := o.conn.Profile.Username
-	password := o.conn.Profile.Password + "," + o.conn.Profile.DeviceId
-	
+	password := o.conn.Profile.Password
 
 	if authToken != "" {
 		var serverPubKey [32]byte
